@@ -1,0 +1,78 @@
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                    10/21/2023  18:43:32  PAGE 1
+
+
+BL51 BANKED LINKER/LOCATER V6.22.2.0, INVOKED BY:
+D:\TIANYISYNC\PORTABLE\KEIL5\C51\BIN\BL51.EXE STARTUP.obj, main.obj, IR.obj TO IR_LED RAMSIZE (256)
+
+
+MEMORY MODEL: SMALL
+
+
+INPUT MODULES INCLUDED:
+  STARTUP.obj (?C_STARTUP)
+  main.obj (MAIN)
+  IR.obj (IR)
+
+
+LINK MAP OF MODULE:  IR_LED (?C_STARTUP)
+
+
+            TYPE    BASE      LENGTH    RELOCATION   SEGMENT NAME
+            -----------------------------------------------------
+
+            * * * * * * *   D A T A   M E M O R Y   * * * * * * *
+            REG     0000H     0008H     ABSOLUTE     "REG BANK 0"
+            DATA    0008H     0007H     UNIT         ?DT?IR
+            DATA    000FH     0003H     UNIT         ?DT?MAIN
+            DATA    0012H     0003H     UNIT         _DATA_GROUP_
+            IDATA   0015H     0001H     UNIT         ?STACK
+
+            * * * * * * *   C O D E   M E M O R Y   * * * * * * *
+            CODE    0000H     0003H     ABSOLUTE     
+            CODE    0003H     0003H     ABSOLUTE     
+                    0006H     001DH                  *** GAP ***
+            CODE    0023H     0003H     ABSOLUTE     
+                    0026H     07DAH                  *** GAP ***
+            CODE    0800H     00D0H     UNIT         ?PR?IR_IN?IR
+            CODE    08D0H     0046H     UNIT         ?PR?MAIN?MAIN
+            CODE    0916H     0046H     UNIT         ?PR?_SHUTDOWN?MAIN
+            CODE    095CH     0027H     UNIT         ?PR?_DELAY?MAIN
+            CODE    0983H     0016H     UNIT         ?PR?INITSERIAL?MAIN
+            CODE    0999H     0016H     UNIT         ?PR?_IRDELAY?IR
+            CODE    09AFH     000CH     UNIT         ?C_C51STARTUP
+            CODE    09BBH     000CH     UNIT         ?PR?SER_INT?MAIN
+            CODE    09C7H     0009H     UNIT         ?PR?IRINIT?IR
+
+
+
+OVERLAY MAP OF MODULE:   IR_LED (?C_STARTUP)
+
+
+SEGMENT                          DATA_GROUP 
+  +--> CALLED SEGMENT          START    LENGTH
+----------------------------------------------
+?C_C51STARTUP                  -----    -----
+  +--> ?PR?MAIN?MAIN
+
+?PR?MAIN?MAIN                  -----    -----
+  +--> ?PR?IRINIT?IR
+  +--> ?PR?INITSERIAL?MAIN
+  +--> ?PR?_SHUTDOWN?MAIN
+
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  10/21/2023  18:43:32  PAGE 2
+
+
+*** NEW ROOT ***************************************************
+
+?PR?IR_IN?IR                   0012H    0003H
+  +--> ?PR?_IRDELAY?IR
+
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_DELAY?MAIN
+
+******************************************************************************
+* RESTRICTED VERSION WITH 0800H BYTE CODE SIZE LIMIT; USED: 01D9H BYTE (23%) *
+******************************************************************************
+
+Program Size: data=22.0 xdata=0 code=473
+LINK/LOCATE RUN COMPLETE.  1 WARNING(S),  0 ERROR(S)
