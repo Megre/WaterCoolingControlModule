@@ -1,146 +1,141 @@
-C51 COMPILER V9.60.0.0   MAIN                                                              10/21/2023 18:43:32 PAGE 1   
+C51 COMPILER V9.60.0.0   MAIN                                                              11/14/2023 18:47:38 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE MAIN
 OBJECT MODULE PLACED IN main.OBJ
-COMPILER INVOKED BY: D:\TianyiSync\Portable\Keil5\C51\BIN\C51.EXE main.C OPTIMIZE(8,SPEED) TABS(2)
+COMPILER INVOKED BY: D:\TianyiSync\Portable\Keil5\C51\BIN\C51.EXE main.C OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND
 
 line level    source
 
-   1          /********************************************************************************
-   2          *  描述:                                                                       *
-   3          *         数码管显示 遥控键值读取器                                            *
-   4          *         遥控器接p3.2                                                         *
-   5          *                                                                              *
-   6          *                                                                              *
-   7          *                                                                              *
-   8          *******************************************************************************/
-   9          #include <intrins.h>
-  10          #include <reg52.h>
-  11          #define  NOP() _nop_()  /* 定义空指令 */
+   1          #include <intrins.h>
+   2          #include <reg52.h>
+   3          #define  NOP() _nop_()  /* 定义空指令 */
+   4          
+   5          unsigned char SenData,ReData,Flag;
+   6          unsigned char control_type = 'u'; // 'u': USB, 'r': 遥控
+   7          sbit PWR_LED = P2^0;
+   8          
+   9          sbit ctrl0 = P1^0;
+  10          sbit ctrl1 = P1^1;
+  11          sbit ctrl2 = P1^2;
   12          
-  13          unsigned char SenData,ReData,Flag;
-  14          sbit PWR_LED = P2^0;
-  15          
-  16          //P1.0<-->P0.0
-  17          //P1.1<-->P0.1
-  18          sbit ctrl0 = P1^0;
-  19          sbit ctrl1 = P1^1;
-  20          sbit ctrl2 = P1^2;
-  21          
-  22          // 引用IR.C中的变量和函数
-  23          extern  unsigned char  IRCOM[7];
-  24          extern void IRInit(); 
-  25          
-  26          void delay(unsigned int i);  
-  27          void shutdown(unsigned char key);
-  28          void initSerial();
-  29          
-  30          main()
-  31          { 
-  32   1        IRInit();
-  33   1        initSerial();
-  34   1      
-  35   1        ctrl0 = 0;
-  36   1        ctrl1 = 0;
-  37   1        ctrl2 = 0;
-  38   1        PWR_LED = 0; // Power LED on
-  39   1        while(1)
-  40   1        { 
-  41   2          // 接收红外并控制
-  42   2          shutdown(IRCOM[2]);         
-  43   2          
-  44   2          // 串口控制
-  45   2          if (Flag==1)
-  46   2          {
-  47   3             if(ReData & 0x80 == 0x80) { // 最高位为1，控制开关
-  48   4                ctrl0 = ((ReData & 1)==1?1:0);
-  49   4               SenData = ctrl0;
-  50   4                //ctrl1 = (ReData & 0x02)==0x02?1:0;
-  51   4                //ctrl2 = (ReData & 0x04)==0x04?1:0;
-  52   4             }
-  53   3             else SenData = 0x60;
-  54   3             //SenData = (ReData & 0x80) | ctrl0 | (ctrl1*2) | (ctrl2*4);
-  55   3             
-C51 COMPILER V9.60.0.0   MAIN                                                              10/21/2023 18:43:32 PAGE 2   
+  13          // 引用IR.C中的变量和函数
+  14          extern  unsigned char  IRCOM[7];
+  15          extern void IRInit(); 
+  16          
+  17          void delay(unsigned int i);  
+  18          void shutdown(unsigned char key);
+  19          void initSerial();
+  20          
+  21          main()
+  22          { 
+  23   1          IRInit();
+  24   1          initSerial();
+  25   1      
+  26   1          ctrl0 = 0;
+  27   1          ctrl1 = 0;
+  28   1          ctrl2 = 0;
+  29   1          PWR_LED = 0; // Power LED on
+  30   1          while(1)
+  31   1          { 
+  32   2            // 接收红外并控制
+  33   2            if(control_type == 'r') {
+  34   3              shutdown(IRCOM[2]);       
+  35   3            }
+  36   2            
+  37   2            // 串口控制
+  38   2            else if (Flag==1)
+  39   2            {
+  40   3               EA=0; // 关总中断 
+  41   3              
+  42   3               if((ReData & 0x80) == 0x80) { // 最高位为1，控制开关
+  43   4                  ctrl0 = ((ReData & 1)==1?1:0);
+  44   4                  ctrl1 = ((ReData & 0x02)==0x02?1:0);
+  45   4                  ctrl2 = ((ReData & 0x04)==0x04?1:0);
+  46   4               }
+  47   3      
+  48   3               SenData = (ReData & 0x80) | ctrl0 | (ctrl1*2) | (ctrl2*4);
+  49   3               
+  50   3               // 发送数据
+  51   3               SBUF = SenData;  // SUBF接受/发送缓冲器
+  52   3               while(TI==0);
+  53   3               TI=0; // 发送中断标志
+  54   3               Flag=0;
+  55   3               EA=1; // 开总中断
+C51 COMPILER V9.60.0.0   MAIN                                                              11/14/2023 18:47:38 PAGE 2   
 
-  56   3             // 发送数据
-  57   3             EA=0; // 关总中断 
-  58   3             SBUF = SenData;  // SUBF接受/发送缓冲器
-  59   3             while(TI==0);
-  60   3             TI=0; // 发送中断标志
-  61   3             Flag=0;
-  62   3             EA=1; // 开总中断
-  63   3          }
-  64   2        } 
-  65   1      }
-  66          
-  67          
-  68          void shutdown(unsigned char key)
-  69          {
-  70   1        if(key == 69)  { // 全开 
-  71   2          if(ctrl0 != 1) ctrl0 = 1;
-  72   2          if(ctrl1 != 1) ctrl1 = 1;
-  73   2          if(ctrl2 != 1) ctrl2 = 1;
-  74   2        }
-  75   1        else if(key == 71) { // 全关
-  76   2          if(ctrl0 != 0) ctrl0 = 0;
-  77   2          if(ctrl1 != 0) ctrl1 = 0;
-  78   2          if(ctrl2 != 0) ctrl2 = 0;
-  79   2        }
-  80   1        else if(key == 12){
-  81   2          if(ctrl0 != 1) ctrl0 = 1;
-  82   2        }
-  83   1        else if(key == 24) {
-  84   2          if(ctrl1 != 1) ctrl1 = 1;
-  85   2        }
+  56   3            }
+  57   2          } 
+  58   1      }
+  59          
+  60          
+  61          void shutdown(unsigned char key)
+  62          { 
+  63   1          if(key == 69)  { // 全开 
+  64   2              if(ctrl0 != 1) ctrl0 = 1;
+  65   2              if(ctrl1 != 1) ctrl1 = 1;
+  66   2              if(ctrl2 != 1) ctrl2 = 1;
+  67   2          }
+  68   1          else if(key == 71) { // 全关
+  69   2              if(ctrl0 != 0) ctrl0 = 0;
+  70   2              if(ctrl1 != 0) ctrl1 = 0;
+  71   2              if(ctrl2 != 0) ctrl2 = 0;
+  72   2          }
+  73   1          else if(key == 12){
+  74   2              if(ctrl0 != 1) ctrl0 = 1;
+  75   2          }
+  76   1          else if(key == 24) {
+  77   2              if(ctrl1 != 1) ctrl1 = 1;
+  78   2          }
+  79   1      }
+  80          
+  81          void delay(unsigned int i)
+  82          {
+  83   1          char j;
+  84   1          for(i; i > 0; i--)
+  85   1              for(j = 200; j > 0; j--);
   86   1      }
   87          
-  88          void delay(unsigned int i)
-  89          {
-  90   1          char j;
-  91   1          for(i; i > 0; i--)
-  92   1              for(j = 200; j > 0; j--);
-  93   1      }
-  94          
-  95          void initSerial() {
-  96   1          SCON = 0x50;       // 串口方式1, 10位异步收发。REN=1允许串行接受状态
-  97   1          TMOD|= 0x20;       // 定时器工作方式2，8位常数自动装入
-  98   1          PCON|= 0x80;       // 波特率倍增
-  99   1          //TH1 = 0xFD;     // baud*2  波特率19200、数据位8、停止位1。效验位无 (11.0592)
- 100   1          //TL1 = 0xFD;
- 101   1          //TH1 = 0xF3;        // baud*2  波特率4800、数据位8、停止位1。效验位无 (12M)
- 102   1          //TL1 = 0xF3;
- 103   1          TH1 = 0xF4;     // baud*2  波特率4800、数据位8、停止位1。效验位无 (11.0592)
- 104   1          TL1 = 0xF4;
- 105   1          TR1  = 1;        // TCON (D6)：定时器T1启动
- 106   1          ES   = 1;        // 开串口中断
- 107   1          EA   = 1;        // 开总中断
- 108   1      }
- 109                                    
- 110          /****************************************************
- 111                         串口中断程序
- 112          ******************************************************/
- 113          void ser_int (void) interrupt 4 using 1
- 114          {
- 115   1        if(RI == 1)        // 接收中断标志
- 116   1        {
- 117   2          RI = 0;       // 清除RI接受中断标志
-C51 COMPILER V9.60.0.0   MAIN                                                              10/21/2023 18:43:32 PAGE 3   
+  88          void initSerial() {
+  89   1          SCON = 0x50;      // 串口方式1, 10位异步收发。REN=1允许串行接受状态
+  90   1          TMOD|= 0x20;      // 定时器工作方式2，8位常数自动装入
+  91   1          PCON|= 0x80;      // 波特率倍增
+  92   1          //TH1 = 0xFD;     // baud*2  波特率19200、数据位8、停止位1。效验位无 (11.0592)
+  93   1          //TL1 = 0xFD;
+  94   1          //TH1 = 0xF3;     // baud*2  波特率4800、数据位8、停止位1。效验位无 (12M)
+  95   1          //TL1 = 0xF3;
+  96   1          TH1 = 0xF4;       // baud*2  波特率4800、数据位8、停止位1。效验位无 (11.0592)
+  97   1          TL1 = 0xF4;
+  98   1          TR1  = 1;         // TCON (D6)：定时器T1启动
+  99   1          ES   = 1;         // 开串口中断
+ 100   1          EA   = 1;         // 开总中断
+ 101   1      }
+ 102                                                              
+ 103          /****************************************************
+ 104                         串口中断程序
+ 105          ******************************************************/
+ 106          void ser_int (void) interrupt 4 using 1
+ 107          {
+ 108   1          if(RI == 1)        // 接收中断标志
+ 109   1          {
+ 110   2              control_type = 'u';
+ 111   2          
+ 112   2              RI = 0;         // 清除RI接受中断标志
+ 113   2              ReData = SBUF;  // SUBF接受/发送缓冲器
+ 114   2              // SenData = ReData;
+ 115   2              Flag=1; // 接收到数据
+ 116   2          }
+ 117   1      }
+C51 COMPILER V9.60.0.0   MAIN                                                              11/14/2023 18:47:38 PAGE 3   
 
- 118   2          ReData = SBUF;  // SUBF接受/发送缓冲器
- 119   2          // SenData = ReData;
- 120   2          Flag=1; // 接收到数据
- 121   2        }
- 122   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    213    ----
+   CODE SIZE        =    270    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
-   DATA SIZE        =      3    ----
+   DATA SIZE        =      4    ----
    IDATA SIZE       =   ----    ----
    BIT SIZE         =   ----    ----
 END OF MODULE INFORMATION.
