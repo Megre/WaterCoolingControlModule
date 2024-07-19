@@ -1,0 +1,4 @@
+"STARTUP.obj",
+"main.obj" 
+TO "IR_LED" 
+RAMSIZE(256) 

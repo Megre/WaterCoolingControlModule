@@ -1,0 +1,104 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              06/23/2024 17:04:38 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: D:\Program Files (x86)\Keil5\C51\BIN\C51.EXE main.C LARGE OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTE
+                    -ND
+
+line level    source
+
+   1          #include <intrins.h>
+   2          #include <reg52.h>
+   3          #include "main.h"
+   4          
+   5          unsigned char SenData,ReData,Flag;
+   6          sbit PWR_LED = P2^0;
+   7          
+   8          sbit ctrl0 = P1^0;
+   9          sbit ctrl1 = P1^1;
+  10          sbit ctrl2 = P1^2;
+  11          
+  12          main()
+  13          { 
+  14   1          initSerial();
+  15   1      
+  16   1          ctrl0 = 0;
+  17   1          ctrl1 = 0;
+  18   1          ctrl2 = 0;
+  19   1          PWR_LED = 0; // Power LED on
+  20   1          
+  21   1          while(1)
+  22   1          {       
+  23   2            if (Flag==1) // 接收到数据
+  24   2            {
+  25   3               Flag=0;
+  26   3               EA=0; // 关总中断 
+  27   3              
+  28   3               if((ReData & 0x80) != 0) { // 最高位为1，控制开关
+  29   4                  ctrl0 = ((ReData & 1)==1?1:0);
+  30   4                  ctrl1 = ((ReData & 0x02)==0x02?1:0);
+  31   4                  ctrl2 = ((ReData & 0x04)==0x04?1:0);
+  32   4               }
+  33   3      
+  34   3               SenData = (ReData & 0x80) | ctrl0 | (ctrl1*2) | (ctrl2*4);
+  35   3               
+  36   3               // 发送数据
+  37   3               SBUF = SenData;  // SUBF接受/发送缓冲器
+  38   3               while(TI==0);
+  39   3               TI=0; // 发送中断标志
+  40   3               EA=1; // 开总中断        
+  41   3            }
+  42   2            
+  43   2            delay(10);
+  44   2          } 
+  45   1      }
+  46          
+  47          
+  48          void delay(unsigned int i)
+  49          {
+  50   1          char j;
+  51   1          for(i; i > 0; i--)
+  52   1              for(j = 200; j > 0; j--);
+  53   1      }
+  54          
+C51 COMPILER V9.59.0.0   MAIN                                                              06/23/2024 17:04:38 PAGE 2   
+
+  55          void initSerial() {
+  56   1          SCON = 0x50;    // 串口方式1, 10位异步收发。REN=1允许串行接受状态
+  57   1          TMOD|= 0x20;    // 定时器工作方式2，8位常数自动装入
+  58   1          // PCON|= 0x80;    // 波特率倍增
+  59   1          TH1 = 0xFD;     // 波特率9600、数据位8、停止位1。效验位无 (11.0592)
+  60   1          TL1 = 0xFD;
+  61   1          
+  62   1          TR1  = 1;         // TCON (D6)：定时器T1启动
+  63   1          ES   = 1;         // 开串口中断
+  64   1          EA   = 1;         // 开总中断
+  65   1      }
+  66                                                              
+  67          /****************************************************
+  68                         串口中断程序
+  69          ******************************************************/
+  70          void ser_int (void) interrupt 4 using 1
+  71          {
+  72   1          if(RI == 1)        // 接收中断标志
+  73   1          {   
+  74   2              RI = 0;         // 清除RI接受中断标志
+  75   2              ReData = SBUF;  // SUBF接受/发送缓冲器
+  76   2              Flag=1; // 接收到数据
+  77   2          }
+  78   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    213    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      3    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
